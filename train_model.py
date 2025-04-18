@@ -1,39 +1,32 @@
 import pandas as pd
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.ensemble import RandomForestClassifier
 import pickle
 
 # Load dataset
-df = pd.read_csv('student_complaints.csv')
+df = pd.read_csv('student_complaints_large.csv')
 
-# Preprocess the data
-X = df[['Reports', 'Age', 'Gpa', 'Gender', 'Nationality']]
-y = df['Genre']
+# Check the column names to ensure they are correct
+print(df.columns)
 
-# Text vectorization for 'Reports' (complaint text)
+# Preprocess the data (using 'Complaint' as input and 'Category' as target)
+X = df['Complaint']  # Only 'Complaint' column as feature
+y = df['Category']   # 'Category' column as the target (output)
+
+# Text vectorization for 'Complaint' (text data)
 vectorizer = TfidfVectorizer(max_features=5000)
-X_report_vectorized = vectorizer.fit_transform(X['Reports'])
-
-# Scaling numerical features: Age and GPA
-scaler = StandardScaler()
-X_numerical = scaler.fit_transform(X[['Age', 'Gpa']])
-
-# Combine text features and numerical features
-import scipy.sparse as sp
-X_combined = sp.hstack([X_report_vectorized, X_numerical])
+X_complaint_vectorized = vectorizer.fit_transform(X)
 
 # Train-test split
-X_train, X_test, y_train, y_test = train_test_split(X_combined, y, test_size=0.2, random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(X_complaint_vectorized, y, test_size=0.2, random_state=42)
 
-# Train a model (RandomForest as an example)
+# Train a model (RandomForestClassifier in this case)
 model = RandomForestClassifier(n_estimators=100, random_state=42)
 model.fit(X_train, y_train)
 
-# Save the model, vectorizer, and scaler
+# Save the model, vectorizer
 pickle.dump(model, open('student_complaint_model.pkl', 'wb'))
 pickle.dump(vectorizer, open('tfidf_vectorizer.pkl', 'wb'))
-pickle.dump(scaler, open('scaler.pkl', 'wb'))
 
 print("Model training and saving complete.")
